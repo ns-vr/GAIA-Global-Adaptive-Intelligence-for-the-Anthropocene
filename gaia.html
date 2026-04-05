@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAIA — Global Adaptive Intelligence for the Anthropocene</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Poppins:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --forest: #0B3D2E;
+  --emerald: #1DB954;
+  --ocean: #0E7490;
+  --sky: #38BDF8;
+  --earth: #6B4F3A;
+  --glow: #A7F432;
+  --glow2: #7EE8A2;
+  --bg: linear-gradient(135deg, #061e17 0%, #0B3D2E 40%, #0a2d40 70%, #0E7490 100%);
+  --glass: rgba(11, 61, 46, 0.35);
+  --glass-border: rgba(167, 244, 50, 0.15);
+  --text: #e8f5f0;
+  --muted: rgba(232, 245, 240, 0.55);
+  --card-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(167,244,50,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text);
+  background: #061e17;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  background: var(--bg);
+  background-attachment: fixed;
+}
+
+/* Particles */
+#particles {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  animation: float linear infinite;
+  opacity: 0;
+}
+
+@keyframes float {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+}
+
+/* Sidebar */
+#sidebar {
+  width: 240px;
+  min-width: 240px;
+  height: 100vh;
+  background: rgba(6, 30, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  z-index: 100;
+  position: relative;
+}
+
+.sidebar-logo {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(167,244,50,0.1);
+}
+
+.sidebar-logo h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  background: linear-gradient(135deg, var(--glow), var(--emerald), var(--sky));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(167,244,50,0.4));
+}
+
+.sidebar-logo p {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.nav-section-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(167,244,50,0.4);
+  text-transform: uppercase;
+  padding: 18px 24px 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+  position: relative;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  user-select: none;
+}
+
+.nav-item:hover {
+  background: rgba(167,244,50,0.06);
+  color: var(--text);
+  border-left-color: rgba(167,244,50,0.4);
+}
+
+.nav-item.active {
+  background: rgba(167,244,50,0.1);
+  color: var(--glow);
+  border-left-color: var(--glow);
+}
+
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 6px var(--glow));
+}
+
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(167,244,50,0.08);
+}
+
+.planet-status {
+  background: rgba(167,244,50,0.08);
+  border: 1px solid rgba(167,244,50,0.15);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 11px;
+}
+
+.planet-status .label { color: var(--muted); margin-bottom: 6px; }
+.planet-status .score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--glow);
+  filter: drop-shadow(0 0 8px var(--glow));
+}
+.planet-status .sub { color: var(--muted); font-size: 10px; margin-top: 2px; }
+
+/* Main content */
+#main {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
+  scroll-behavior: smooth;
+}
+
+#main::-webkit-scrollbar { width: 4px; }
+#main::-webkit-scrollbar-track { background: transparent; }
+#main::-webkit-scrollbar-thumb { background: rgba(167,244,50,0.3); border-radius: 2px; }
+
+/* Pages */
+.page { display: none; animation: pageIn 0.5s ease; min-height: 100vh; }
+.page.active { display: block; }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass card */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,244,50,0.15);
+}
+
+/* ========================= HOME PAGE ========================= */
+#page-home {
+  padding: 0;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(167,244,50,0.06) 0%, transparent 70%),
+              radial-gradient(ellipse 60% 80% at 20% 80%, rgba(14,116,144,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--glow);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(60px, 10vw, 110px);
+  font-weight: 900;
+  letter-spacing: 12px;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffffff 0%, var(--glow) 40%, var(--sky) 80%, var(--emerald) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 40px rgba(167,244,50,0.3));
+  margin-bottom: 12px;
+}
+
+.hero-subtitle-title {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: var(--sky);
+  margin-bottom: 24px;
+}
+
+.hero-desc {
+  max-width: 560px;
+  line-height: 1.8;
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 40px;
+}
+
+.hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+.btn-primary {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--glow), var(--emerald));
+  color: #061e17;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(167,244,50,0.35);
+  text-transform: uppercase;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(167,244,50,0.5);
+}
+
+.btn-outline {
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--sky);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 1px;
+  border: 1px solid rgba(56,189,248,0.4);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.btn-outline:hover {
+  background: rgba(56,189,248,0.1);
+  border-color: var(--sky);
+  transform: translateY(-2px);
+}
+
+/* Earth orb */
+.earth-orb {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 35%, #1a6644, #0B3D2E 40%, #0a2030 70%, #050d15 100%);
+  box-shadow:
+    0 0 0 2px rgba(167,244,50,0.15),
+    0 0 60px rgba(14,116,144,0.4),
+    0 0 120px rgba(11,61,46,0.6),
+    inset 0 0 60px rgba(0,0,0,0.5);
+  margin-bottom: 40px;
+  position: relative;
+  animation: orb-spin 20s linear infinite;
+  overflow: hidden;
+}
+
+.earth-orb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 30% 20% at 30% 40%, rgba(29,185,84,0.4), transparent),
+    radial-gradient(ellipse 20% 30% at 65% 55%, rgba(29,185,84,0.3), transparent),
+    radial-gradient(ellipse 25% 15% at 45% 20%, rgba(29,185,84,0.25), transparent);
+}
+
+.earth-orb::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: -20%;
+  width: 140%;
+  height: 100%;
+  background: radial-gradient(ellipse 40% 20% at 60% 50%, rgba(56,189,248,0.15), transparent);
+  animation: orb-cloud 8s ease-in-out infinite alternate;
+}
+
+@keyframes orb-spin {
+  from { box-shadow: 0 0 0 2px rgba(167,244,50,0.15), 0 0 60px rgba(14,116,144,0.4), 0 0 120px rgba(11,61,46,0.6), inset 0 0 60px rgba(0,0,0,0.5); }
+  50% { box-shadow: 0 0 0 2px rgba(167,244,50,0.25), 0 0 80px rgba(14,116,144,0.5), 0 0 160px rgba(11,61,46,0.7), inset 0 0 60px rgba(0,0,0,0.5); }
+  to { box-shadow: 0 0 0 2px rgba(167,244,50,0.15), 0 0 60px rgba(14,116,144,0.4), 0 0 120px rgba(11,61,46,0.6), inset 0 0 60px rgba(0,0,0,0.5); }
+}
+
+@keyframes orb-cloud {
+  from { opacity: 0.5; transform: translateX(0); }
+  to { opacity: 1; transform: translateX(8%); }
+}
+
+.home-features {
+  padding: 60px 40px;
+}
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--glow);
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: var(--text);
+}
+
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 60px; }
+
+.feature-card {
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--glow), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 8px rgba(167,244,50,0.4));
+}
+
+.feature-card h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--glow2);
+}
+
+.feature-card p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.planet-health-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 40px;
+  background: rgba(6,30,23,0.6);
+  border-top: 1px solid rgba(167,244,50,0.08);
+  border-bottom: 1px solid rgba(167,244,50,0.08);
+}
+
+.health-metric { text-align: center; }
+.health-metric .h-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+.health-metric .h-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--glow);
+  filter: drop-shadow(0 0 12px rgba(167,244,50,0.5));
+  line-height: 1;
+}
+.health-metric .h-unit { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ========================= DASHBOARD ========================= */
+#page-dashboard { padding: 32px; }
+
+.page-header {
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-header h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--text);
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--glow);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--glow);
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(167,244,50,0.6); }
+  50% { box-shadow: 0 0 0 8px rgba(167,244,50,0); }
+}
+
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+.metric-card {
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167,244,50,0.12), transparent);
+  transform: translate(20px, -20px);
+}
+
+.metric-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--glow);
+  filter: drop-shadow(0 0 8px rgba(167,244,50,0.4));
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.metric-sub { font-size: 11px; color: var(--muted); }
+
+.metric-card.ocean .metric-value { color: var(--sky); filter: drop-shadow(0 0 8px rgba(56,189,248,0.4)); }
+.metric-card.risk .metric-value { color: #f59e0b; filter: drop-shadow(0 0 8px rgba(245,158,11,0.4)); }
+.metric-card.carbon .metric-value { color: var(--emerald); filter: drop-shadow(0 0 8px rgba(29,185,84,0.4)); }
+
+.dashboard-lower { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+
+.map-area {
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 400px;
+  background: rgba(6,30,23,0.8);
+  border: 1px solid var(--glass-border);
+  position: relative;
+}
+
+.map-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  display: block;
+}
+
+.map-controls {
+  position: absolute;
+  top: 12px; left: 12px;
+  display: flex; gap: 8px; flex-direction: column;
+}
+
+.map-btn {
+  padding: 6px 12px;
+  background: rgba(6,30,23,0.9);
+  border: 1px solid rgba(167,244,50,0.2);
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.map-btn:hover, .map-btn.active { color: var(--glow); border-color: var(--glow); background: rgba(167,244,50,0.08); }
+
+.dashboard-side { display: flex; flex-direction: column; gap: 16px; }
+
+.side-card { padding: 20px; }
+.side-card h4 {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.activity-list { display: flex; flex-direction: column; gap: 10px; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(167,244,50,0.06);
+}
+.activity-item:last-child { border-bottom: none; padding-bottom: 0; }
+.activity-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.activity-text { color: var(--muted); line-height: 1.5; }
+.activity-text strong { color: var(--text); }
+.activity-time { font-size: 10px; color: rgba(167,244,50,0.5); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+/* ========================= FORMS / INPUT ========================= */
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: rgba(6,30,23,0.7);
+  border: 1px solid rgba(167,244,50,0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: rgba(167,244,50,0.5);
+  box-shadow: 0 0 0 3px rgba(167,244,50,0.08);
+}
+.form-input::placeholder, .form-textarea::placeholder { color: rgba(232,245,240,0.25); }
+.form-select option { background: #0B3D2E; }
+.form-textarea { resize: vertical; min-height: 80px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.range-wrapper { display: flex; align-items: center; gap: 12px; }
+.form-range { flex: 1; accent-color: var(--glow); }
+.range-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--glow); min-width: 40px; text-align: right; }
+
+/* ========================= ECOSYSTEM ========================= */
+#page-ecosystem { padding: 32px; }
+
+.ecosystem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.eco-region {
+  padding: 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.eco-region.selected {
+  border-color: var(--glow);
+  background: rgba(167,244,50,0.1);
+}
+.eco-region h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 8px; }
+.eco-region .eco-type { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+.eco-bar { height: 4px; border-radius: 2px; background: rgba(167,244,50,0.15); margin-bottom: 6px; overflow: hidden; }
+.eco-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--emerald), var(--glow)); transition: width 1s ease; }
+
+.eco-detail { padding: 24px; margin-bottom: 20px; }
+.eco-detail h3 { font-family: 'Cinzel', serif; font-size: 18px; margin-bottom: 6px; }
+.eco-detail p { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+.eco-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.eco-stat { text-align: center; padding: 14px; background: rgba(6,30,23,0.5); border-radius: 10px; border: 1px solid rgba(167,244,50,0.08); }
+.eco-stat .sv { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: var(--glow); }
+.eco-stat .sl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* ========================= SOIL ========================= */
+#page-soil { padding: 32px; }
+
+.myco-container { position: relative; width: 100%; height: 300px; border-radius: 12px; overflow: hidden; background: rgba(6,30,23,0.8); margin-bottom: 20px; }
+.myco-canvas { width: 100%; height: 100%; }
+
+.soil-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.soil-metric { padding: 20px; text-align: center; }
+.soil-metric .sm-icon { font-size: 28px; margin-bottom: 10px; }
+.soil-metric .sm-val { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: var(--glow); }
+.soil-metric .sm-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+
+.soil-input-form { padding: 24px; margin-bottom: 20px; }
+.soil-input-form h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 16px; color: var(--glow2); }
+
+.soil-records { padding: 24px; }
+.soil-records h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 16px; color: var(--glow2); }
+.record-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.record-table th { text-align: left; padding: 8px 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid rgba(167,244,50,0.1); font-size: 10px; }
+.record-table td { padding: 10px 12px; border-bottom: 1px solid rgba(167,244,50,0.05); color: var(--text); }
+.record-table tr:hover td { background: rgba(167,244,50,0.04); }
+.record-table .tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.tag-good { background: rgba(167,244,50,0.15); color: var(--glow); }
+.tag-warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.tag-risk { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+/* ========================= CLIMATE RISK ========================= */
+#page-climate { padding: 32px; }
+
+.risk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+.risk-card { padding: 24px; }
+.risk-card h3 { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.risk-value { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; margin-bottom: 8px; line-height: 1; }
+.risk-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 8px; }
+.risk-bar-fill { height: 100%; border-radius: 3px; transition: width 1.5s ease; }
+.risk-desc { font-size: 12px; color: var(--muted); }
+
+.risk-low .risk-value { color: var(--glow); }
+.risk-low .risk-bar-fill { background: linear-gradient(90deg, var(--emerald), var(--glow)); }
+.risk-med .risk-value { color: #f59e0b; }
+.risk-med .risk-bar-fill { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.risk-high .risk-value { color: #ef4444; }
+.risk-high .risk-bar-fill { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.risk-cyan .risk-value { color: var(--sky); }
+.risk-cyan .risk-bar-fill { background: linear-gradient(90deg, var(--ocean), var(--sky)); }
+
+.climate-form { padding: 24px; margin-top: 20px; }
+.climate-form h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 16px; color: var(--glow2); }
+.climate-reports { padding: 24px; margin-top: 16px; }
+.climate-reports h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 16px; color: var(--glow2); }
+
+.alert-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: rgba(6,30,23,0.5);
+  border: 1px solid rgba(167,244,50,0.06);
+}
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+.alert-body { flex: 1; }
+.alert-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.alert-desc { font-size: 11px; color: var(--muted); }
+.alert-time { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: rgba(167,244,50,0.5); }
+
+/* ========================= IMPACT SIMULATOR ========================= */
+#page-impact { padding: 32px; }
+
+.simulator-layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+
+.sim-form { padding: 24px; }
+.sim-form h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 20px; color: var(--glow2); }
+
+.sim-results { padding: 24px; }
+.sim-results h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 20px; color: var(--glow2); }
+
+.result-bars { display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; }
+.result-bar-item {}
+.result-bar-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+.result-bar-label { color: var(--muted); }
+.result-bar-value { font-family: 'JetBrains Mono', monospace; color: var(--glow); font-weight: 700; }
+.result-bar-track { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.result-bar-fill { height: 100%; border-radius: 5px; transition: width 1.5s cubic-bezier(0.4,0,0.2,1); }
+
+.result-fill-1 { background: linear-gradient(90deg, var(--emerald), var(--glow)); }
+.result-fill-2 { background: linear-gradient(90deg, var(--ocean), var(--sky)); }
+.result-fill-3 { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+.result-fill-4 { background: linear-gradient(90deg, #dc2626, #f59e0b); }
+
+.sim-history { padding: 24px; margin-top: 20px; }
+.sim-history h3 { font-family: 'Cinzel', serif; font-size: 16px; margin-bottom: 16px; color: var(--glow2); }
+
+.sim-history-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(6,30,23,0.5);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(167,244,50,0.06);
+  font-size: 12px;
+}
+.sim-history-item .sh-main { color: var(--text); }
+.sim-history-item .sh-sub { color: var(--muted); margin-top: 2px; font-size: 11px; }
+.sim-history-item .sh-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(167,244,50,0.5); text-align: right; }
+
+/* ========================= ABOUT ========================= */
+#page-about { padding: 32px; max-width: 900px; }
+
+.about-hero { padding: 40px; margin-bottom: 24px; text-align: center; }
+.about-hero h2 { font-family: 'Cinzel', serif; font-size: 32px; font-weight: 700; margin-bottom: 14px; }
+.about-hero p { color: var(--muted); line-height: 1.8; max-width: 600px; margin: 0 auto; }
+
+.tech-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+.tech-card { padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
+.tech-icon { font-size: 32px; flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(167,244,50,0.3)); }
+.tech-card h4 { font-family: 'Cinzel', serif; font-size: 15px; margin-bottom: 6px; color: var(--glow2); }
+.tech-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+.mission-card { padding: 32px; margin-bottom: 20px; }
+.mission-card h3 { font-family: 'Cinzel', serif; font-size: 20px; margin-bottom: 14px; }
+.mission-card p { color: var(--muted); line-height: 1.8; font-size: 14px; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  background: rgba(6,30,23,0.95);
+  border: 1px solid var(--glow);
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 13px;
+  color: var(--glow);
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(167,244,50,0.2);
+  animation: toastIn 0.3s ease;
+  max-width: 320px;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Empty state */
+.empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+
+/* Scrollable areas */
+.overflow-y { overflow-y: auto; }
+.overflow-y::-webkit-scrollbar { width: 3px; }
+.overflow-y::-webkit-scrollbar-thumb { background: rgba(167,244,50,0.2); border-radius: 2px; }
+
+.chart-wrap { width: 100%; height: 200px; }
+.chart-wrap-sm { width: 100%; height: 160px; }
+
+.status-ok { color: var(--glow); }
+.status-warn { color: #f59e0b; }
+.status-bad { color: #ef4444; }
+
+/* Responsive flex helpers */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.gap-4 { gap: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.text-center { text-align: center; }
+.w-full { width: 100%; }
+
+</style>
+</head>
+<body>
+
+<!-- Floating particles -->
+<div id="particles"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h1>GAIA</h1>
+    <p>Global Adaptive Intelligence</p>
+  </div>
+  <div class="nav-section-label">Navigation</div>
+  <div class="nav-item active" onclick="showPage('home')">
+    <span class="nav-icon">🌍</span> Home
+  </div>
+  <div class="nav-item" onclick="showPage('dashboard')">
+    <span class="nav-icon">⚡</span> GAIA Dashboard
+  </div>
+  <div class="nav-item" onclick="showPage('ecosystem')">
+    <span class="nav-icon">🌿</span> Ecosystem Twin
+  </div>
+  <div class="nav-item" onclick="showPage('soil')">
+    <span class="nav-icon">🍄</span> Soil Intelligence
+  </div>
+  <div class="nav-item" onclick="showPage('climate')">
+    <span class="nav-icon">🌊</span> Climate Risk
+  </div>
+  <div class="nav-item" onclick="showPage('impact')">
+    <span class="nav-icon">🌱</span> Impact Simulator
+  </div>
+  <div class="nav-item" onclick="showPage('about')">
+    <span class="nav-icon">✦</span> About GAIA
+  </div>
+  <div class="sidebar-footer">
+    <div class="planet-status">
+      <div class="label">🌍 Planet Health</div>
+      <div class="score" id="sidebar-score">74.3</div>
+      <div class="sub">Global Ecosystem Score</div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main id="main">
+
+  <!-- ===== HOME ===== -->
+  <div id="page-home" class="page active">
+    <section class="hero">
+      <div class="earth-orb"></div>
+      <div class="hero-eyebrow">✦ Planetary Intelligence System ✦</div>
+      <div class="hero-title">GAIA</div>
+      <div class="hero-subtitle-title">The Planet's Intelligence System</div>
+      <p class="hero-desc">An AI-powered platform that monitors global ecosystems, predicts climate risks, and guides restoration efforts with real-time intelligence.</p>
+      <div class="hero-buttons">
+        <button class="btn-primary" onclick="showPage('dashboard')">⚡ Launch Dashboard</button>
+        <button class="btn-outline" onclick="showPage('ecosystem')">🌿 Explore Ecosystems</button>
+      </div>
+    </section>
+
+    <div class="planet-health-strip">
+      <div class="health-metric">
+        <div class="h-label">Global Ecosystem Health</div>
+        <div class="h-value" id="home-eco">74.3</div>
+        <div class="h-unit">/ 100 score</div>
+      </div>
+      <div class="health-metric">
+        <div class="h-label">Climate Risk Index</div>
+        <div class="h-value" id="home-risk" style="color:var(--sky)">62.1</div>
+        <div class="h-unit">moderate alert</div>
+      </div>
+      <div class="health-metric">
+        <div class="h-label">Carbon Capture Potential</div>
+        <div class="h-value" id="home-carbon" style="color:var(--emerald)">8.4</div>
+        <div class="h-unit">Gt CO₂ / year</div>
+      </div>
+    </div>
+
+    <div class="home-features">
+      <div class="section-label">✦ Core Intelligence Modules</div>
+      <div class="section-title">What GAIA Does</div>
+      <div class="feature-grid">
+        <div class="glass-card feature-card">
+          <div class="feature-icon">🌿</div>
+          <h3>Ecosystem Intelligence</h3>
+          <p>Real-time monitoring of forests, wetlands, and marine ecosystems using satellite data and AI analysis to track biodiversity health scores.</p>
+        </div>
+        <div class="glass-card feature-card">
+          <div class="feature-icon">🍄</div>
+          <h3>Soil & Biodiversity Monitoring</h3>
+          <p>Deep underground intelligence tracking mycelium networks, soil pH, microbial activity, and nutrient cycles across global regions.</p>
+        </div>
+        <div class="glass-card feature-card">
+          <div class="feature-icon">🌊</div>
+          <h3>Climate Risk Prediction</h3>
+          <p>Advanced climate modeling detecting flood risk, heat islands, drought patterns, and air quality trends for early warning systems.</p>
+        </div>
+      </div>
+
+      <div class="section-label">✦ Digital Twin Technology</div>
+      <div class="section-title">Explore the Planet's Digital Twin</div>
+      <div class="glass-card" style="padding:32px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+        <div>
+          <p style="color:var(--muted);max-width:480px;line-height:1.8;margin-bottom:20px;">GAIA's Ecosystem Digital Twin creates a living, breathing model of the planet — updated every 6 hours with satellite imagery, sensor networks, and AI pattern recognition.</p>
+          <button class="btn-primary" onclick="showPage('dashboard')">Enter Command Center →</button>
+        </div>
+        <div style="font-size:80px;opacity:0.6;filter:drop-shadow(0 0 20px rgba(167,244,50,0.3))">🛰️</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div id="page-dashboard" class="page">
+    <div class="page-header">
+      <h2>⚡ GAIA Planetary Control Panel</h2>
+      <div class="live-badge"><div class="live-dot"></div> LIVE FEED</div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="glass-card metric-card">
+        <div class="metric-label">🌿 Ecosystem Health</div>
+        <div class="metric-value" id="d-eco">74.3</div>
+        <div class="metric-sub">Global Score / 100</div>
+        <div class="chart-wrap-sm"><canvas id="chart-eco"></canvas></div>
+      </div>
+      <div class="glass-card metric-card ocean">
+        <div class="metric-label">💧 Soil Vitality</div>
+        <div class="metric-value" id="d-soil">68.7</div>
+        <div class="metric-sub">MycoNet Score / 100</div>
+        <div class="chart-wrap-sm"><canvas id="chart-soil"></canvas></div>
+      </div>
+      <div class="glass-card metric-card risk">
+        <div class="metric-label">⚠️ Climate Risk Index</div>
+        <div class="metric-value" id="d-risk">62.1</div>
+        <div class="metric-sub">Moderate Alert Level</div>
+        <div class="chart-wrap-sm"><canvas id="chart-risk"></canvas></div>
+      </div>
+      <div class="glass-card metric-card carbon">
+        <div class="metric-label">🌱 Carbon Sequestration</div>
+        <div class="metric-value" id="d-carbon">8.4</div>
+        <div class="metric-sub">Gt CO₂ / year potential</div>
+        <div class="chart-wrap-sm"><canvas id="chart-carbon"></canvas></div>
+      </div>
+    </div>
+
+    <div class="dashboard-lower">
+      <div class="map-area glass-card">
+        <div class="map-controls">
+          <button class="map-btn active" onclick="setMapLayer('forest',this)">Forest Health</button>
+          <button class="map-btn" onclick="setMapLayer('mangrove',this)">Mangroves</button>
+          <button class="map-btn" onclick="setMapLayer('heat',this)">Urban Heat</button>
+          <button class="map-btn" onclick="setMapLayer('flood',this)">Flood Risk</button>
+        </div>
+        <canvas id="worldmap" class="map-canvas"></canvas>
+      </div>
+      <div class="dashboard-side">
+        <div class="glass-card side-card">
+          <h4>📡 Live Activity Feed</h4>
+          <div class="activity-list" id="activity-list"></div>
+        </div>
+        <div class="glass-card side-card">
+          <h4>🌐 Regional Status</h4>
+          <div id="regional-status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ECOSYSTEM DIGITAL TWIN ===== -->
+  <div id="page-ecosystem" class="page">
+    <div class="page-header">
+      <h2>🌿 Ecosystem Digital Twin</h2>
+      <div class="live-badge"><div class="live-dot"></div> SIMULATING</div>
+    </div>
+    <div class="ecosystem-grid" id="eco-regions"></div>
+    <div class="glass-card eco-detail" id="eco-detail">
+      <div style="text-align:center;padding:20px;color:var(--muted)">
+        <div style="font-size:40px;margin-bottom:10px;opacity:0.3">🌍</div>
+        Select a region above to view detailed ecosystem data
+      </div>
+    </div>
+    <div class="glass-card" style="padding:24px;margin-top:16px">
+      <h4 style="font-family:'Cinzel',serif;font-size:16px;margin-bottom:16px;color:var(--glow2)">📊 Ecosystem Trends</h4>
+      <div class="chart-wrap"><canvas id="chart-ecosystems"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== SOIL INTELLIGENCE ===== -->
+  <div id="page-soil" class="page">
+    <div class="page-header">
+      <h2>🍄 Soil Intelligence — MycoNet</h2>
+      <div class="live-badge"><div class="live-dot"></div> SCANNING</div>
+    </div>
+
+    <div class="glass-card" style="margin-bottom:20px;padding:16px">
+      <div class="myco-container" style="margin-bottom:0">
+        <canvas id="myco-canvas" class="myco-canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="soil-metrics" id="soil-metrics-grid"></div>
+
+    <div class="glass-card soil-input-form">
+      <h3>📍 Log Soil Sample</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Location / Region</label>
+          <input class="form-input" id="soil-location" placeholder="e.g., Amazon Basin Sector 7" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sample Date</label>
+          <input class="form-input" id="soil-date" type="date" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Soil pH (0–14)</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="soil-ph" min="0" max="14" step="0.1" value="6.5" oninput="document.getElementById('ph-val').textContent=this.value">
+            <span class="range-val" id="ph-val">6.5</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Moisture (%)</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="soil-moist" min="0" max="100" value="45" oninput="document.getElementById('moist-val').textContent=this.value+'%'">
+            <span class="range-val" id="moist-val">45%</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Microbial Activity</label>
+          <select class="form-select" id="soil-microbial">
+            <option>High</option><option>Medium</option><option>Low</option><option>Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mycelium Density</label>
+          <select class="form-select" id="soil-mycelium">
+            <option>Dense</option><option>Moderate</option><option>Sparse</option><option>Absent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="soil-notes" placeholder="Observations, conditions, anomalies..."></textarea>
+      </div>
+      <button class="btn-primary" onclick="saveSoilSample()">💾 Log Sample</button>
+    </div>
+
+    <div class="glass-card soil-records">
+      <h3>📋 Soil Sample Records</h3>
+      <div id="soil-records-table"></div>
+    </div>
+  </div>
+
+  <!-- ===== CLIMATE RISK ===== -->
+  <div id="page-climate" class="page">
+    <div class="page-header">
+      <h2>🌊 Climate Risk Monitor</h2>
+      <div class="live-badge"><div class="live-dot"></div> MONITORING</div>
+    </div>
+
+    <div class="risk-grid" id="risk-cards"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="glass-card climate-form">
+        <h3>📝 Submit Climate Report</h3>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input class="form-input" id="cr-location" placeholder="City or coordinates" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Risk Type</label>
+          <select class="form-select" id="cr-type">
+            <option>Flood Risk</option><option>Urban Heat</option><option>Drought</option><option>Air Quality</option><option>Storm</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Severity (1–10)</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="cr-severity" min="1" max="10" value="5" oninput="document.getElementById('sev-val').textContent=this.value">
+            <span class="range-val" id="sev-val">5</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="cr-desc" placeholder="Describe the observed climate event..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="saveClimateReport()">📡 Submit Report</button>
+      </div>
+
+      <div class="glass-card climate-reports">
+        <h3>🚨 Recent Alerts</h3>
+        <div id="climate-alerts-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== IMPACT SIMULATOR ===== -->
+  <div id="page-impact" class="page">
+    <div class="page-header">
+      <h2>🌱 Impact Simulator</h2>
+    </div>
+
+    <div class="simulator-layout">
+      <div class="glass-card sim-form">
+        <h3>🛠️ Restoration Parameters</h3>
+        <div class="form-group">
+          <label class="form-label">Trees Planted</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="sim-trees" min="0" max="10000000" step="10000" value="500000" oninput="updateSim()">
+            <span class="range-val" id="trees-val">500K</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mangrove Restoration (ha)</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="sim-mangrove" min="0" max="500000" step="1000" value="50000" oninput="updateSim()">
+            <span class="range-val" id="mangrove-val">50K ha</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Green Roofs Added</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="sim-roofs" min="0" max="100000" step="500" value="10000" oninput="updateSim()">
+            <span class="range-val" id="roofs-val">10K</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Wetland Restoration (km²)</label>
+          <div class="range-wrapper">
+            <input type="range" class="form-range" id="sim-wetland" min="0" max="50000" step="100" value="5000" oninput="updateSim()">
+            <span class="range-val" id="wetland-val">5,000 km²</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Simulation Name</label>
+          <input class="form-input" id="sim-name" placeholder="e.g., Amazon Recovery 2035" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Region</label>
+          <select class="form-select" id="sim-region">
+            <option>Global</option><option>Amazon Basin</option><option>Sahel Africa</option><option>Southeast Asia</option><option>Northern Europe</option><option>North America</option><option>Australia/Oceania</option>
+          </select>
+        </div>
+        <button class="btn-primary w-full" style="margin-top:4px" onclick="runSimulation()">🚀 Run Simulation</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="glass-card sim-results" id="sim-results-panel">
+          <h3>📊 Simulation Results</h3>
+          <div class="result-bars" id="result-bars"></div>
+          <div class="chart-wrap"><canvas id="chart-sim"></canvas></div>
+        </div>
+        <div class="glass-card sim-history">
+          <h3>🕒 Simulation History</h3>
+          <div id="sim-history-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ABOUT ===== -->
+  <div id="page-about" class="page">
+    <div class="glass-card about-hero">
+      <h2>About GAIA</h2>
+      <p>GAIA (Global Adaptive Intelligence for the Anthropocene) is a next-generation planetary intelligence platform designed to monitor, simulate, and guide restoration of Earth's ecosystems using real-time satellite data, AI analysis, and sensor networks.</p>
+    </div>
+
+    <div class="glass-card mission-card">
+      <h3>🎯 Our Mission</h3>
+      <p>The Anthropocene demands a new form of planetary stewardship. GAIA exists to give scientists, policymakers, and restoration practitioners a unified command center — turning the complexity of Earth's systems into actionable intelligence. Every metric, every prediction, every simulation is in service of one goal: a healthier planet.</p>
+    </div>
+
+    <div class="section-label" style="padding:0 0 10px">✦ Technology Stack</div>
+    <div class="tech-grid">
+      <div class="glass-card tech-card">
+        <div class="tech-icon">🧠</div>
+        <div>
+          <h4>AI & Machine Learning</h4>
+          <p>Neural networks trained on 40 years of satellite imagery and climate data to detect ecosystem stress, predict climate events, and generate restoration models.</p>
+        </div>
+      </div>
+      <div class="glass-card tech-card">
+        <div class="tech-icon">🛰️</div>
+        <div>
+          <h4>Satellite Data</h4>
+          <p>Multi-spectral analysis from ESA Sentinel, NASA MODIS, and commercial SAR satellites providing 6-hour global coverage updates.</p>
+        </div>
+      </div>
+      <div class="glass-card tech-card">
+        <div class="tech-icon">📡</div>
+        <div>
+          <h4>IoT Sensor Networks</h4>
+          <p>10,000+ ground-truth sensors measuring soil chemistry, moisture, microbial activity, and biodiversity across 87 biomes globally.</p>
+        </div>
+      </div>
+      <div class="glass-card tech-card">
+        <div class="tech-icon">🌡️</div>
+        <div>
+          <h4>Climate Science</h4>
+          <p>Integrated climate models from IPCC data pipelines, oceanographic monitoring, and atmospheric CO₂ measurement networks.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card" style="padding:28px;margin-top:16px">
+      <h3 style="font-family:'Cinzel',serif;font-size:18px;margin-bottom:12px">⚙️ How It Works</h3>
+      <p style="color:var(--muted);line-height:1.9;font-size:14px">
+        GAIA ingests data streams from satellites, IoT sensors, and citizen science reports. AI models process this data to compute ecosystem health scores, identify risk hotspots, and run restoration simulations. The Digital Twin layer creates a real-time virtual model of planetary systems that updates every 6 hours. Users can interact with this twin to explore scenarios, log field data, submit climate reports, and simulate the impact of restoration efforts — all stored in a persistent data layer accessible across sessions.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ==================== STORAGE ====================
+const DB_KEY = 'gaia_db_v2';
+
+function loadDB() {
+  try {
+    return JSON.parse(localStorage.getItem(DB_KEY)) || { soilSamples: [], climateReports: [], simulations: [] };
+  } catch { return { soilSamples: [], climateReports: [], simulations: [] }; }
+}
+
+function saveDB(db) {
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+let db = loadDB();
+
+// ==================== PARTICLES ====================
+const pContainer = document.getElementById('particles');
+for (let i = 0; i < 25; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = Math.random() * 4 + 1;
+  const colors = ['rgba(167,244,50,0.7)', 'rgba(56,189,248,0.5)', 'rgba(29,185,84,0.6)'];
+  p.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${Math.random()*100}%;
+    background:${colors[Math.floor(Math.random()*colors.length)]};
+    animation-duration:${Math.random()*20+15}s;
+    animation-delay:${Math.random()*10}s;
+  `;
+  pContainer.appendChild(p);
+}
+
+// ==================== NAVIGATION ====================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const navItems = document.querySelectorAll('.nav-item');
+  const map = { home:0, dashboard:1, ecosystem:2, soil:3, climate:4, impact:5, about:6 };
+  navItems[map[id]].classList.add('active');
+  document.getElementById('main').scrollTop = 0;
+  if (id === 'dashboard') initDashboard();
+  if (id === 'soil') initSoil();
+  if (id === 'climate') initClimate();
+  if (id === 'impact') initImpact();
+  if (id === 'ecosystem') initEcosystem();
+}
+
+// ==================== TOAST ====================
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ==================== DASHBOARD ====================
+let dashCharts = {};
+
+function initDashboard() {
+  ['eco','soil','risk','carbon'].forEach(k => { if (dashCharts[k]) { dashCharts[k].destroy(); } });
+
+  const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const sparklineOpts = (color, data) => ({
+    type: 'line',
+    data: { labels: months, datasets: [{ data, borderColor: color, borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: color.replace('rgb','rgba').replace(')',',0.12)'), tension: 0.4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
+  });
+
+  dashCharts.eco = new Chart(document.getElementById('chart-eco'), sparklineOpts('rgb(167,244,50)', [68,70,72,69,74,73,75,74,76,74,73,74]));
+  dashCharts.soil = new Chart(document.getElementById('chart-soil'), sparklineOpts('rgb(56,189,248)', [62,64,66,65,67,68,69,68,70,68,69,69]));
+  dashCharts.risk = new Chart(document.getElementById('chart-risk'), sparklineOpts('rgb(245,158,11)', [55,58,60,62,61,64,63,62,65,63,62,62]));
+  dashCharts.carbon = new Chart(document.getElementById('chart-carbon'), sparklineOpts('rgb(29,185,84)', [7.8,8.0,8.1,8.2,8.3,8.2,8.4,8.3,8.5,8.4,8.4,8.4]));
+
+  drawWorldMap('forest');
+  renderActivityFeed();
+  renderRegionalStatus();
+}
+
+let mapLayer = 'forest';
+function setMapLayer(layer, btn) {
+  mapLayer = layer;
+  document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawWorldMap(layer);
+}
+
+function drawWorldMap(layer) {
+  const canvas = document.getElementById('worldmap');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 700;
+  canvas.height = canvas.offsetHeight || 400;
+  const W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Ocean
+  const oceanGrad = ctx.createLinearGradient(0,0,W,H);
+  oceanGrad.addColorStop(0,'#061e17');
+  oceanGrad.addColorStop(1,'#0a2030');
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0,0,W,H);
+
+  const layerColors = {
+    forest: { land:'#0B3D2E', hot:'#1DB954', hotLabel:'#A7F432' },
+    mangrove: { land:'#0a3028', hot:'#38BDF8', hotLabel:'#67e8f9' },
+    heat: { land:'#2d1a10', hot:'#ef4444', hotLabel:'#fca5a5' },
+    flood: { land:'#0a1a2e', hot:'#3b82f6', hotLabel:'#93c5fd' },
+  };
+  const lc = layerColors[layer];
+
+  // Simplified continent blobs
+  const regions = [
+    { name:'N America', x:0.18,y:0.28, rx:0.14, ry:0.22, score: layer==='forest'?82:layer==='heat'?68:layer==='flood'?45:72 },
+    { name:'S America', x:0.26,y:0.60, rx:0.09, ry:0.20, score: layer==='forest'?91:layer==='heat'?55:layer==='flood'?60:88 },
+    { name:'Europe', x:0.48,y:0.25, rx:0.07, ry:0.14, score: layer==='forest'?65:layer==='heat'?72:layer==='flood'?58:60 },
+    { name:'Africa', x:0.50,y:0.52, rx:0.10, ry:0.22, score: layer==='forest'?58:layer==='heat'?88:layer==='flood'?40:55 },
+    { name:'Asia', x:0.67,y:0.30, rx:0.18, ry:0.25, score: layer==='forest'?70:layer==='heat'?80:layer==='flood'?75:65 },
+    { name:'Australia', x:0.76,y:0.65, rx:0.09, ry:0.12, score: layer==='forest'?45:layer==='heat'?85:layer==='flood'?30:40 },
+  ];
+
+  regions.forEach(r => {
+    const cx = r.x*W, cy = r.y*H;
+    const score = r.score / 100;
+
+    // Land mass
+    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(r.rx*W,r.ry*H));
+    grad.addColorStop(0, lc.hot + '88');
+    grad.addColorStop(0.5, lc.land + 'cc');
+    grad.addColorStop(1, lc.land + '22');
+    ctx.beginPath();
+    ctx.ellipse(cx,cy, r.rx*W, r.ry*H, 0, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Hot spots
+    for(let i=0;i<4;i++){
+      const ox = (Math.random()-0.5)*r.rx*W*1.2;
+      const oy = (Math.random()-0.5)*r.ry*H*1.2;
+      const glow = ctx.createRadialGradient(cx+ox,cy+oy,0,cx+ox,cy+oy,20+score*20);
+      glow.addColorStop(0, lc.hot+'99');
+      glow.addColorStop(1,'transparent');
+      ctx.beginPath();
+      ctx.arc(cx+ox,cy+oy,20+score*20,0,Math.PI*2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+    }
+
+    // Label
+    ctx.font = '11px JetBrains Mono';
+    ctx.fillStyle = lc.hotLabel;
+    ctx.textAlign = 'center';
+    ctx.fillText(r.name, cx, cy-r.ry*H-8);
+    ctx.font = 'bold 13px JetBrains Mono';
+    ctx.fillStyle = lc.hotLabel + 'cc';
+    ctx.fillText(r.score, cx, cy-r.ry*H+6);
+  });
+
+  // Grid overlay
+  ctx.strokeStyle = 'rgba(167,244,50,0.05)';
+  ctx.lineWidth = 1;
+  for(let x=0;x<W;x+=W/12){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=H/8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // Layer label
+  ctx.font = '10px JetBrains Mono';
+  ctx.fillStyle = 'rgba(167,244,50,0.6)';
+  ctx.textAlign = 'right';
+  const labels = {forest:'FOREST HEALTH INDEX',mangrove:'MANGROVE COVERAGE',heat:'URBAN HEAT INDEX',flood:'FLOOD RISK ZONES'};
+  ctx.fillText(labels[layer], W-12, H-12);
+}
+
+const activities = [
+  { color:'#A7F432', text:'<strong>Amazon Sector 7</strong> ecosystem health improved +2.3%', time:'2m ago' },
+  { color:'#38BDF8', text:'<strong>Coral Triangle</strong> bleaching alert downgraded', time:'8m ago' },
+  { color:'#f59e0b', text:'<strong>Sahel Region</strong> drought index elevated to 7.2', time:'15m ago' },
+  { color:'#1DB954', text:'<strong>Borneo</strong> reforestation milestone: 1M hectares', time:'31m ago' },
+  { color:'#ef4444', text:'<strong>Jakarta</strong> urban heat index reached 38.4°C', time:'44m ago' },
+];
+
+function renderActivityFeed() {
+  const list = document.getElementById('activity-list');
+  list.innerHTML = activities.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color}"></div>
+      <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div>
+    </div>
+  `).join('');
+}
+
+function renderRegionalStatus() {
+  const regions = [
+    { name:'Americas', score:77, color:'#A7F432' },
+    { name:'Europe', score:65, color:'#38BDF8' },
+    { name:'Africa', score:58, color:'#f59e0b' },
+    { name:'Asia', score:70, color:'#A7F432' },
+    { name:'Oceania', score:62, color:'#f59e0b' },
+  ];
+  document.getElementById('regional-status').innerHTML = regions.map(r => `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--muted)">${r.name}</span>
+        <span style="font-family:'JetBrains Mono',monospace;color:${r.color}">${r.score}</span>
+      </div>
+      <div class="eco-bar"><div class="eco-bar-fill" style="width:${r.score}%;background:${r.color}77"></div></div>
+    </div>
+  `).join('');
+}
+
+// ==================== ECOSYSTEM ====================
+const ecoData = [
+  { id:'amazon', name:'Amazon Rainforest', type:'Tropical Rainforest', biodiversity:94, carbon:89, tree_density:87, desc:'The Amazon basin contains 10% of all species on Earth. Currently under moderate pressure from agricultural expansion.', species:'~3M', area:'5.5M km²', status:'Moderate Stress' },
+  { id:'coral', name:'Coral Triangle', type:'Marine Ecosystem', biodiversity:96, carbon:72, tree_density:65, desc:'The most biodiverse marine region on Earth, home to 76% of coral species and 37% of reef fish species.', species:'~75K marine', area:'6M km²', status:'High Stress' },
+  { id:'boreal', name:'Siberian Boreal', type:'Boreal Forest', biodiversity:68, carbon:92, tree_density:79, desc:'The world\'s largest terrestrial biome, storing 30% of Earth\'s land-based carbon in permafrost and biomass.', species:'~12K', area:'13.1M km²', status:'Low Stress' },
+  { id:'sahel', name:'Sahel Savanna', type:'Dryland Ecosystem', biodiversity:55, carbon:38, tree_density:41, desc:'A transitional zone undergoing the Great Green Wall restoration initiative. Showing early signs of recovery.', species:'~8K', area:'5.4M km²', status:'Critical' },
+];
+
+let ecoChart;
+function initEcosystem() {
+  const grid = document.getElementById('eco-regions');
+  grid.innerHTML = ecoData.map(e => `
+    <div class="glass-card eco-region" id="eco-${e.id}" onclick="selectEco('${e.id}')">
+      <div class="eco-type">${e.type}</div>
+      <h3>${e.name}</h3>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Biodiversity</div>
+      <div class="eco-bar"><div class="eco-bar-fill" style="width:${e.biodiversity}%"></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;margin-top:8px">Carbon Storage</div>
+      <div class="eco-bar"><div class="eco-bar-fill" style="width:${e.carbon}%;background:linear-gradient(90deg,var(--ocean),var(--sky))"></div></div>
+      <div style="margin-top:12px;font-size:11px;display:flex;justify-content:space-between">
+        <span style="color:var(--muted)">Status</span>
+        <span style="color:${e.status==='Low Stress'?'#A7F432':e.status==='Moderate Stress'?'#f59e0b':'#ef4444'}">${e.status}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Chart
+  if (ecoChart) ecoChart.destroy();
+  ecoChart = new Chart(document.getElementById('chart-ecosystems'), {
+    type: 'line',
+    data: {
+      labels: ['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+      datasets: ecoData.map((e,i) => ({
+        label: e.name,
+        data: Array.from({length:11}, (_,j) => Math.max(20, e.biodiversity - Math.random()*15 + j*1.2)),
+        borderColor: ['#A7F432','#38BDF8','#1DB954','#f59e0b'][i],
+        borderWidth: 2, pointRadius: 3, fill: false, tension: 0.4
+      }))
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'rgba(232,245,240,0.6)',font:{size:11}}}}, scales:{x:{ticks:{color:'rgba(232,245,240,0.4)'}},y:{ticks:{color:'rgba(232,245,240,0.4)'},min:0,max:100}} }
+  });
+}
+
+function selectEco(id) {
+  document.querySelectorAll('.eco-region').forEach(r => r.classList.remove('selected'));
+  document.getElementById('eco-'+id).classList.add('selected');
+  const e = ecoData.find(x => x.id === id);
+  document.getElementById('eco-detail').innerHTML = `
+    <h3>${e.name}</h3>
+    <div class="eco-type">${e.type}</div>
+    <p>${e.desc}</p>
+    <div class="eco-stats">
+      <div class="eco-stat"><div class="sv">${e.biodiversity}</div><div class="sl">Biodiversity Score</div></div>
+      <div class="eco-stat"><div class="sv" style="color:var(--sky)">${e.carbon}</div><div class="sl">Carbon Storage</div></div>
+      <div class="eco-stat"><div class="sv" style="color:var(--emerald)">${e.tree_density}</div><div class="sl">Tree Density</div></div>
+      <div class="eco-stat"><div class="sv" style="font-size:16px">${e.species}</div><div class="sl">Species Count</div></div>
+      <div class="eco-stat"><div class="sv" style="font-size:16px">${e.area}</div><div class="sl">Total Area</div></div>
+      <div class="eco-stat"><div class="sv" style="font-size:14px;color:${e.status==='Low Stress'?'#A7F432':e.status==='Moderate Stress'?'#f59e0b':'#ef4444'}">${e.status}</div><div class="sl">Status</div></div>
+    </div>
+  `;
+}
+
+// ==================== SOIL ====================
+let mycoAnim, soilChart;
+let mycoNodes = [], mycoEdges = [];
+
+function initSoil() {
+  initMyco();
+  renderSoilMetrics();
+  renderSoilTable();
+  document.getElementById('soil-date').valueAsDate = new Date();
+}
+
+function initMyco() {
+  const canvas = document.getElementById('myco-canvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 700;
+  canvas.height = 300;
+  const W = canvas.width, H = canvas.height;
+
+  mycoNodes = Array.from({length:30}, (_,i) => ({
+    x: Math.random()*W, y: Math.random()*H,
+    vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
+    r: Math.random()*5+3,
+    pulse: Math.random()*Math.PI*2
+  }));
+  mycoEdges = [];
+  for(let i=0;i<mycoNodes.length;i++) for(let j=i+1;j<mycoNodes.length;j++) {
+    const dx=mycoNodes[i].x-mycoNodes[j].x, dy=mycoNodes[i].y-mycoNodes[j].y;
+    if(Math.sqrt(dx*dx+dy*dy)<120) mycoEdges.push([i,j]);
+  }
+
+  if(mycoAnim) cancelAnimationFrame(mycoAnim);
+  function draw() {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#050f0a'); bg.addColorStop(1,'#0a1f15');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+    const t = Date.now()/1000;
+    mycoNodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if(n.x<0||n.x>W) n.vx*=-1;
+      if(n.y<0||n.y>H) n.vy*=-1;
+      n.pulse += 0.03;
+    });
+
+    mycoEdges.forEach(([i,j]) => {
+      const a=mycoNodes[i], b=mycoNodes[j];
+      const dx=a.x-b.x,dy=a.y-b.y, dist=Math.sqrt(dx*dx+dy*dy);
+      const alpha = Math.max(0, 1-dist/120);
+      const pulse = (Math.sin(t*2+i*0.3)+1)/2;
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle = `rgba(167,244,50,${alpha*0.25*pulse})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    mycoNodes.forEach((n,i) => {
+      const pulse = (Math.sin(n.pulse)+1)/2;
+      const grd = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*3);
+      grd.addColorStop(0,'rgba(167,244,50,0.9)');
+      grd.addColorStop(0.5,'rgba(29,185,84,0.4)');
+      grd.addColorStop(1,'transparent');
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r*(1+pulse*0.3),0,Math.PI*2);
+      ctx.fillStyle=grd; ctx.fill();
+    });
+
+    ctx.font='10px JetBrains Mono'; ctx.fillStyle='rgba(167,244,50,0.4)'; ctx.textAlign='left';
+    ctx.fillText('MYCONET — FUNGAL NETWORK VISUALIZATION', 12, H-12);
+    mycoAnim = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function renderSoilMetrics() {
+  const metrics = [
+    { icon:'💧', val:'47%', label:'Soil Moisture' },
+    { icon:'⚗️', val:'6.4', label:'Soil pH' },
+    { icon:'🦠', val:'High', label:'Microbial Activity' },
+    { icon:'🍄', val:'78', label:'MycoNet Score' },
+  ];
+  document.getElementById('soil-metrics-grid').innerHTML = metrics.map(m => `
+    <div class="glass-card soil-metric">
+      <div class="sm-icon">${m.icon}</div>
+      <div class="sm-val">${m.val}</div>
+      <div class="sm-label">${m.label}</div>
+    </div>
+  `).join('');
+}
+
+function saveSoilSample() {
+  const loc = document.getElementById('soil-location').value.trim();
+  if (!loc) { toast('⚠️ Please enter a location'); return; }
+  db.soilSamples.unshift({
+    id: Date.now(),
+    location: loc,
+    date: document.getElementById('soil-date').value || new Date().toISOString().slice(0,10),
+    ph: document.getElementById('soil-ph').value,
+    moisture: document.getElementById('soil-moist').value,
+    microbial: document.getElementById('soil-microbial').value,
+    mycelium: document.getElementById('soil-mycelium').value,
+    notes: document.getElementById('soil-notes').value,
+    timestamp: new Date().toISOString()
+  });
+  saveDB(db);
+  document.getElementById('soil-location').value = '';
+  document.getElementById('soil-notes').value = '';
+  renderSoilTable();
+  toast('✅ Soil sample logged successfully');
+}
+
+function renderSoilTable() {
+  const el = document.getElementById('soil-records-table');
+  if (!db.soilSamples.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🍄</div>No samples logged yet. Use the form above to record your first soil sample.</div>';
+    return;
+  }
+  el.innerHTML = `<table class="record-table">
+    <thead><tr><th>Location</th><th>Date</th><th>pH</th><th>Moisture</th><th>Microbial</th><th>Mycelium</th></tr></thead>
+    <tbody>${db.soilSamples.slice(0,10).map(s => `
+      <tr>
+        <td>${s.location}</td>
+        <td>${s.date}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${s.ph}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${s.moisture}%</td>
+        <td><span class="tag ${s.microbial==='High'?'tag-good':s.microbial==='Medium'?'tag-warn':'tag-risk'}">${s.microbial}</span></td>
+        <td><span class="tag ${s.mycelium==='Dense'?'tag-good':s.mycelium==='Moderate'?'tag-warn':'tag-risk'}">${s.mycelium}</span></td>
+      </tr>
+    `).join('')}</tbody>
+  </table>`;
+}
+
+// ==================== CLIMATE RISK ====================
+function initClimate() {
+  const risks = [
+    { label:'Flood Risk Prediction', val:'42%', pct:42, level:'risk-med', desc:'Moderate flood probability in coastal lowlands' },
+    { label:'Urban Heat Index', val:'38.2°C', pct:76, level:'risk-high', desc:'Critical heat levels in major metropolitan zones' },
+    { label:'Air Quality Index', val:'67', pct:67, level:'risk-med', desc:'Moderate AQI — sensitive groups should limit exposure' },
+    { label:'Drought Risk', val:'28%', pct:28, level:'risk-low', desc:'Low drought probability, adequate soil moisture' },
+  ];
+  document.getElementById('risk-cards').innerHTML = risks.map(r => `
+    <div class="glass-card risk-card ${r.level}">
+      <h3>${r.label}</h3>
+      <div class="risk-value">${r.val}</div>
+      <div class="risk-bar"><div class="risk-bar-fill" style="width:${r.pct}%"></div></div>
+      <div class="risk-desc">${r.desc}</div>
+    </div>
+  `).join('');
+  renderClimateAlerts();
+}
+
+function saveClimateReport() {
+  const loc = document.getElementById('cr-location').value.trim();
+  if (!loc) { toast('⚠️ Please enter a location'); return; }
+  db.climateReports.unshift({
+    id: Date.now(),
+    location: loc,
+    type: document.getElementById('cr-type').value,
+    severity: document.getElementById('cr-severity').value,
+    desc: document.getElementById('cr-desc').value,
+    timestamp: new Date().toISOString()
+  });
+  saveDB(db);
+  document.getElementById('cr-location').value = '';
+  document.getElementById('cr-desc').value = '';
+  renderClimateAlerts();
+  toast('📡 Climate report submitted');
+}
+
+function renderClimateAlerts() {
+  const el = document.getElementById('climate-alerts-list');
+  const icons = {'Flood Risk':'🌊','Urban Heat':'🌡️','Drought':'🏜️','Air Quality':'💨','Storm':'⛈️'};
+  const allAlerts = [
+    { icon:'🌊', title:'Coastal Flooding Alert', desc:'Rising tidal surge detected — Jakarta coastline', time:'12m ago', sev:8 },
+    { icon:'🌡️', title:'Heat Dome Warning', desc:'Sustained 42°C+ expected — Central India', time:'1h ago', sev:9 },
+    ...db.climateReports.slice(0,5).map(r => ({
+      icon: icons[r.type] || '⚠️',
+      title: `${r.type} — User Report`,
+      desc: `${r.location}: ${r.desc || 'Severity ' + r.severity + '/10'}`,
+      time: timeAgo(r.timestamp),
+      sev: parseInt(r.severity)
+    }))
+  ];
+  el.innerHTML = allAlerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-body">
+        <div class="alert-title" style="color:${a.sev>=8?'#ef4444':a.sev>=5?'#f59e0b':'#A7F432'}">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+      </div>
+      <div class="alert-time">${a.time}</div>
+    </div>
+  `).join('');
+}
+
+function timeAgo(iso) {
+  const d = (Date.now() - new Date(iso)) / 1000;
+  if (d < 60) return 'just now';
+  if (d < 3600) return Math.floor(d/60) + 'm ago';
+  if (d < 86400) return Math.floor(d/3600) + 'h ago';
+  return Math.floor(d/86400) + 'd ago';
+}
+
+// ==================== IMPACT SIMULATOR ====================
+let simChart;
+function initImpact() {
+  updateSim();
+  renderSimHistory();
+}
+
+function fmt(n) {
+  if(n>=1e9) return (n/1e9).toFixed(1)+'B';
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(0)+'K';
+  return n;
+}
+
+function updateSim() {
+  const trees = parseInt(document.getElementById('sim-trees').value);
+  const mangrove = parseInt(document.getElementById('sim-mangrove').value);
+  const roofs = parseInt(document.getElementById('sim-roofs').value);
+  const wetland = parseInt(document.getElementById('sim-wetland').value);
+
+  document.getElementById('trees-val').textContent = fmt(trees);
+  document.getElementById('mangrove-val').textContent = fmt(mangrove)+' ha';
+  document.getElementById('roofs-val').textContent = fmt(roofs);
+  document.getElementById('wetland-val').textContent = wetland.toLocaleString()+' km²';
+
+  const carbon = ((trees * 0.025) + (mangrove * 0.8) + (roofs * 0.0005) + (wetland * 12)) / 1000;
+  const temp = (carbon * 0.0003).toFixed(4);
+  const bio = Math.min(100, (trees/100000 + mangrove/5000 + wetland/500)).toFixed(1);
+  const flood = Math.min(95, (mangrove/10000 + wetland/200 + roofs/5000)).toFixed(1);
+
+  document.getElementById('result-bars').innerHTML = [
+    { label:'Carbon Captured', val: carbon.toFixed(2)+' Mt CO₂/yr', pct: Math.min(100,carbon/5*100), cls:'result-fill-1' },
+    { label:'Temperature Reduction', val: temp+'°C', pct: Math.min(100,parseFloat(temp)/0.05*100), cls:'result-fill-2' },
+    { label:'Biodiversity Improvement', val: bio+'%', pct: parseFloat(bio), cls:'result-fill-3' },
+    { label:'Flood Risk Reduction', val: flood+'%', pct: parseFloat(flood), cls:'result-fill-4' },
+  ].map(r => `
+    <div class="result-bar-item">
+      <div class="result-bar-header"><span class="result-bar-label">${r.label}</span><span class="result-bar-value">${r.val}</span></div>
+      <div class="result-bar-track"><div class="result-bar-fill ${r.cls}" style="width:${r.pct}%"></div></div>
+    </div>
+  `).join('');
+
+  if(simChart) simChart.destroy();
+  simChart = new Chart(document.getElementById('chart-sim'), {
+    type:'bar',
+    data:{
+      labels:['Year 1','Year 5','Year 10','Year 20','Year 50'],
+      datasets:[{
+        label:'Carbon (Mt CO₂)',
+        data:[carbon*0.2,carbon*0.6,carbon,carbon*1.5,carbon*2.2],
+        backgroundColor:'rgba(167,244,50,0.4)',
+        borderColor:'#A7F432', borderWidth:2, borderRadius:4
+      },{
+        label:'Biodiversity Score',
+        data:[parseFloat(bio)*0.1,parseFloat(bio)*0.4,parseFloat(bio)*0.7,parseFloat(bio),parseFloat(bio)*1.2],
+        backgroundColor:'rgba(56,189,248,0.3)',
+        borderColor:'#38BDF8', borderWidth:2, borderRadius:4
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,245,240,0.6)',font:{size:11}}}},scales:{x:{ticks:{color:'rgba(232,245,240,0.4)'}},y:{ticks:{color:'rgba(232,245,240,0.4)'}}}}
+  });
+}
+
+function runSimulation() {
+  const name = document.getElementById('sim-name').value.trim() || 'Untitled Simulation';
+  const region = document.getElementById('sim-region').value;
+  const trees = parseInt(document.getElementById('sim-trees').value);
+  const mangrove = parseInt(document.getElementById('sim-mangrove').value);
+  const carbon = ((trees * 0.025) + (mangrove * 0.8)) / 1000;
+
+  db.simulations.unshift({
+    id: Date.now(),
+    name, region,
+    trees, mangrove,
+    roofs: parseInt(document.getElementById('sim-roofs').value),
+    wetland: parseInt(document.getElementById('sim-wetland').value),
+    carbon: carbon.toFixed(2),
+    timestamp: new Date().toISOString()
+  });
+  saveDB(db);
+  renderSimHistory();
+  toast('🚀 Simulation "' + name + '" saved!');
+}
+
+function renderSimHistory() {
+  const el = document.getElementById('sim-history-list');
+  if (!db.simulations.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div>No simulations saved yet. Configure parameters and click Run Simulation.</div>';
+    return;
+  }
+  el.innerHTML = db.simulations.slice(0,8).map(s => `
+    <div class="sim-history-item">
+      <div>
+        <div class="sh-main">🌱 ${s.name}</div>
+        <div class="sh-sub">${s.region} · ${fmt(s.trees)} trees · ${fmt(s.mangrove)} ha mangroves · ${s.carbon} Mt CO₂</div>
+      </div>
+      <div class="sh-time">${timeAgo(s.timestamp)}</div>
+    </div>
+  `).join('');
+}
+
+// ==================== ANIMATED COUNTERS ====================
+function animateCounter(el, target, duration=1500, decimals=1) {
+  const start = 0, startTime = performance.now();
+  function update(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    el.textContent = (start + (target - start) * ease).toFixed(decimals);
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// ==================== INIT ====================
+window.addEventListener('load', () => {
+  animateCounter(document.getElementById('home-eco'), 74.3);
+  animateCounter(document.getElementById('home-risk'), 62.1);
+  animateCounter(document.getElementById('home-carbon'), 8.4);
+});
+
+// Window resize
+window.addEventListener('resize', () => {
+  if (document.getElementById('page-dashboard').classList.contains('active')) drawWorldMap(mapLayer);
+});
+</script>
+</body>
+</html>
